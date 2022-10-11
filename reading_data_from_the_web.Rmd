@@ -1,0 +1,14 @@
+---
+title: "Reading Data From The Web"
+output: github_document
+date: "2022-10-11"
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(rvest)
+library(httr)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+## Extracting Tables
