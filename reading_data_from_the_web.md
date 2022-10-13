@@ -107,3 +107,243 @@ knitr::kable(sw_df)
 | Star Wars: Episode VII - The Force Awakens     | 138 min | \$936.66M |
 | Star Wars: Episode VIII - The Last Jedi        | 152 min | \$620.18M |
 | Star Wars: The Rise Of Skywalker               | 141 min | \$515.20M |
+
+*Learning Assessment*: This page contains the 10 most recent reviews of
+the movie “Napoleon Dynamite”. Use a process similar to the one above to
+extract the titles of the reviews.
+
+``` r
+url = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber=1"
+# We can change the page number - once we get to pages 3, things start to break
+
+dynamite_html = read_html(url)
+
+review_titles = 
+  dynamite_html %>%
+  html_elements(".a-text-bold span") %>%
+  html_text()
+
+review_stars = 
+  dynamite_html %>%
+  html_elements("#cm_cr-review_list .review-rating") %>%
+  html_text()
+
+review_text = 
+  dynamite_html %>%
+  html_elements(".review-text-content span") %>%
+  html_text()
+
+reviews = tibble(
+  title = review_titles,
+  stars = review_stars,
+  text = review_text
+)
+
+reviews
+```
+
+    ## # A tibble: 10 × 3
+    ##    title                                         stars              text        
+    ##    <chr>                                         <chr>              <chr>       
+    ##  1 Quirky                                        5.0 out of 5 stars Good family…
+    ##  2 Funny movie - can't play it !                 1.0 out of 5 stars Sony 4k pla…
+    ##  3 A brilliant story about teenage life          5.0 out of 5 stars Napoleon Dy…
+    ##  4 HUHYAH                                        5.0 out of 5 stars Spicy       
+    ##  5 Cult Classic                                  4.0 out of 5 stars Takes a tim…
+    ##  6 Sweet                                         5.0 out of 5 stars Timeless Mo…
+    ##  7 Cute                                          4.0 out of 5 stars Fun         
+    ##  8 great collectible                             5.0 out of 5 stars one of the …
+    ##  9 Iconic, hilarious flick ! About friend ship . 5.0 out of 5 stars Who doesn’t…
+    ## 10 Funny                                         5.0 out of 5 stars Me and my d…
+
+## Using an API
+
+New York City has a great open data resource, and we’ll use that for our
+API examples. Although most (all?) of these datasets can be accessed by
+clicking through a website, we’ll access them directly using the API to
+improve reproducibility and make it easier to update results to reflect
+new data.
+
+``` r
+water_df = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") %>% 
+  content("parsed")
+```
+
+We can also import this dataset as a JSON file. This takes a bit more
+work (and this is, really, a pretty easy case), but it’s still doable.
+The structure of json object notation is a bit different and accomodates
+more complicated data structures.
+
+``` r
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.json") %>% 
+  content("text") %>%
+  jsonlite::fromJSON() %>%
+  as_tibble()
+```
+
+### BRFSS Data
+
+Data.gov also has a lot of data available using their API; often this is
+available as CSV or JSON as well. For example, we might be interested in
+data coming from BRFSS. This is importable via the API as a CSV (JSON,
+in this example, is more complicated).
+
+``` r
+brfss_df = 
+  GET("https://chronicdata.cdc.gov/resource/acme-vg9e.csv", 
+      query = list("$limit" = 5000)) %>% 
+  content("parsed")
+
+brfss_df
+```
+
+    ## # A tibble: 5,000 × 23
+    ##     year locationa…¹ locat…² class topic quest…³ respo…⁴ sampl…⁵ data_…⁶ confi…⁷
+    ##    <dbl> <chr>       <chr>   <chr> <chr> <chr>   <chr>     <dbl>   <dbl>   <dbl>
+    ##  1  2010 AL          AL - M… Heal… Over… How is… Excell…      91    15.6    11  
+    ##  2  2010 AL          AL - J… Heal… Over… How is… Excell…      94    18.9    14.1
+    ##  3  2010 AL          AL - T… Heal… Over… How is… Excell…      58    20.8    14.1
+    ##  4  2010 AL          AL - J… Heal… Over… How is… Very g…     148    30      24.9
+    ##  5  2010 AL          AL - T… Heal… Over… How is… Very g…     109    29.5    23.2
+    ##  6  2010 AL          AL - M… Heal… Over… How is… Very g…     177    31.3    26  
+    ##  7  2010 AL          AL - J… Heal… Over… How is… Good        208    33.1    28.2
+    ##  8  2010 AL          AL - M… Heal… Over… How is… Good        224    31.2    26.1
+    ##  9  2010 AL          AL - T… Heal… Over… How is… Good        171    33.8    27.7
+    ## 10  2010 AL          AL - M… Heal… Over… How is… Fair        120    15.5    11.7
+    ## # … with 4,990 more rows, 13 more variables: confidence_limit_high <dbl>,
+    ## #   display_order <dbl>, data_value_unit <chr>, data_value_type <chr>,
+    ## #   data_value_footnote_symbol <chr>, data_value_footnote <chr>,
+    ## #   datasource <chr>, classid <chr>, topicid <chr>, locationid <lgl>,
+    ## #   questionid <chr>, respid <chr>, geolocation <chr>, and abbreviated variable
+    ## #   names ¹​locationabbr, ²​locationdesc, ³​question, ⁴​response, ⁵​sample_size,
+    ## #   ⁶​data_value, ⁷​confidence_limit_low
+
+By default, the CDC API limits data to the first 1000 rows. Here I’ve
+increased that by changing an element of the API query – I looked around
+the website describing the API to find the name of the argument, and
+then used the appropriate syntax for GET. To get the full data, I could
+increase this so that I get all the data at once or I could try
+iterating over chunks of a few thousand rows.
+
+### POKEMON!
+
+Both of the previous examples are, actually, pretty easy – we accessed
+data that is essentially a data table, and we had a very straightforward
+API (although updating queries isn’t obvious at first).
+
+To get a sense of how this becomes complicated, let’s look at the
+Pokemon API (which is also pretty nice).
+
+``` r
+poke = 
+  GET("http://pokeapi.co/api/v2/pokemon/1") %>% #Getting pokemon #1
+  content()
+
+poke$name
+```
+
+    ## [1] "bulbasaur"
+
+``` r
+poke[["stats"]]
+```
+
+    ## [[1]]
+    ## [[1]]$base_stat
+    ## [1] 45
+    ## 
+    ## [[1]]$effort
+    ## [1] 0
+    ## 
+    ## [[1]]$stat
+    ## [[1]]$stat$name
+    ## [1] "hp"
+    ## 
+    ## [[1]]$stat$url
+    ## [1] "https://pokeapi.co/api/v2/stat/1/"
+    ## 
+    ## 
+    ## 
+    ## [[2]]
+    ## [[2]]$base_stat
+    ## [1] 49
+    ## 
+    ## [[2]]$effort
+    ## [1] 0
+    ## 
+    ## [[2]]$stat
+    ## [[2]]$stat$name
+    ## [1] "attack"
+    ## 
+    ## [[2]]$stat$url
+    ## [1] "https://pokeapi.co/api/v2/stat/2/"
+    ## 
+    ## 
+    ## 
+    ## [[3]]
+    ## [[3]]$base_stat
+    ## [1] 49
+    ## 
+    ## [[3]]$effort
+    ## [1] 0
+    ## 
+    ## [[3]]$stat
+    ## [[3]]$stat$name
+    ## [1] "defense"
+    ## 
+    ## [[3]]$stat$url
+    ## [1] "https://pokeapi.co/api/v2/stat/3/"
+    ## 
+    ## 
+    ## 
+    ## [[4]]
+    ## [[4]]$base_stat
+    ## [1] 65
+    ## 
+    ## [[4]]$effort
+    ## [1] 1
+    ## 
+    ## [[4]]$stat
+    ## [[4]]$stat$name
+    ## [1] "special-attack"
+    ## 
+    ## [[4]]$stat$url
+    ## [1] "https://pokeapi.co/api/v2/stat/4/"
+    ## 
+    ## 
+    ## 
+    ## [[5]]
+    ## [[5]]$base_stat
+    ## [1] 65
+    ## 
+    ## [[5]]$effort
+    ## [1] 0
+    ## 
+    ## [[5]]$stat
+    ## [[5]]$stat$name
+    ## [1] "special-defense"
+    ## 
+    ## [[5]]$stat$url
+    ## [1] "https://pokeapi.co/api/v2/stat/5/"
+    ## 
+    ## 
+    ## 
+    ## [[6]]
+    ## [[6]]$base_stat
+    ## [1] 45
+    ## 
+    ## [[6]]$effort
+    ## [1] 0
+    ## 
+    ## [[6]]$stat
+    ## [[6]]$stat$name
+    ## [1] "speed"
+    ## 
+    ## [[6]]$stat$url
+    ## [1] "https://pokeapi.co/api/v2/stat/6/"
+
+To build a Pokemon dataset for analysis, you’d need to distill the data
+returned from the API into a useful format; iterate across all pokemon;
+and combine the results.
