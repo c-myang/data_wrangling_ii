@@ -46,8 +46,31 @@ swm_html =
   read_html("https://www.imdb.com/list/ls070150896/")
 ```
 
+The information isn’t stored in a handy table, so we’re going to isolate the CSS selector for elements we care about. A bit of clicking around on Selector Gadget gets me something like below. 
 
-The information isn’t stored in a handy table, so we’re going to isolate the CSS selector for elements we care about. A bit of clicking around gets me something like below.
+```{r}
+sw_titles = swm_html %>% 
+  html_elements(".lister-item-header a") %>%   # We get this CSS element from Selector Gadget!
+  html_text()
+
+sw_runtime = swm_html %>% 
+  html_elements(".runtime") %>% 
+  html_text()
+
+sw_gross = swm_html %>% 
+  html_elements(".text-muted .ghost~ .text-muted+ span") %>% 
+  html_text()
+
+sw_df = 
+  tibble(
+    title = sw_titles,
+    runtime = sw_runtime,
+    money = sw_gross
+  )
+
+knitr::kable(sw_df)
+```
+
 
 
 

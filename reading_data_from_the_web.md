@@ -70,5 +70,40 @@ swm_html =
 ```
 
 The information isn’t stored in a handy table, so we’re going to isolate
-the CSS selector for elements we care about. A bit of clicking around
-gets me something like below.
+the CSS selector for elements we care about. A bit of clicking around on
+Selector Gadget gets me something like below.
+
+``` r
+sw_titles = swm_html %>% 
+  html_elements(".lister-item-header a") %>%   # We get this CSS element from Selector Gadget!
+  html_text()
+
+sw_runtime = swm_html %>% 
+  html_elements(".runtime") %>% 
+  html_text()
+
+sw_gross = swm_html %>% 
+  html_elements(".text-muted .ghost~ .text-muted+ span") %>% 
+  html_text()
+
+sw_df = 
+  tibble(
+    title = sw_titles,
+    runtime = sw_runtime,
+    money = sw_gross
+  )
+
+knitr::kable(sw_df)
+```
+
+| title                                          | runtime | money     |
+|:-----------------------------------------------|:--------|:----------|
+| Star Wars: Episode I - The Phantom Menace      | 136 min | \$474.54M |
+| Star Wars: Episode II - Attack of the Clones   | 142 min | \$310.68M |
+| Star Wars: Episode III - Revenge of the Sith   | 140 min | \$380.26M |
+| Star Wars                                      | 121 min | \$322.74M |
+| Star Wars: Episode V - The Empire Strikes Back | 124 min | \$290.48M |
+| Star Wars: Episode VI - Return of the Jedi     | 131 min | \$309.13M |
+| Star Wars: Episode VII - The Force Awakens     | 138 min | \$936.66M |
+| Star Wars: Episode VIII - The Last Jedi        | 152 min | \$620.18M |
+| Star Wars: The Rise Of Skywalker               | 141 min | \$515.20M |
