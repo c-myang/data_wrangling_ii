@@ -1,7 +1,7 @@
 ---
 title: "Reading Data From The Web"
 output: github_document
-date: "2022-10-11"
+date: "2022-10-13"
 ---
 
 ```{r setup, include = FALSE}
@@ -12,3 +12,42 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 
 ## Extracting Tables
+
+### NSDUH Dataset
+
+Using `read_html` in the rvest package, we can read in the html from a webpage.
+
+```{r}
+url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+drug_use_html = read_html(url)
+
+drug_use_html
+```
+
+```{r}
+drug_use_html %>% 
+  html_table() %>% 
+  first() %>% 
+  slice(-1)
+```
+
+`html_table` pulls out all tables from the webpage. It's not giving a dataframe, but a list (a special structure for storing information), and so we can use `first` to pull out the first item from the list and output it as a table.
+
+The “note” at the bottom of the table appears in every column in the first row. We need to remove that using `slice(-1)`.
+
+## CSS Selectors 
+
+### Star Wars movies
+
+Suppose we’d like to scrape the data about the Star Wars Movies from the IMDB page. The first step is the same as before – we need to get the HTML.
+
+```{r}
+swm_html = 
+  read_html("https://www.imdb.com/list/ls070150896/")
+```
+
+
+The information isn’t stored in a handy table, so we’re going to isolate the CSS selector for elements we care about. A bit of clicking around gets me something like below.
+
+
+
