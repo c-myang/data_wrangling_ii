@@ -157,3 +157,48 @@ data_marj %>%
 ```
 
 ## Restaurant inspections
+
+```{r}
+data("rest_inspec")
+
+rest_inspec %>% 
+  slice(1:10)
+
+rest_inspec %>% 
+  group_by(boro, grade) %>% 
+  summarize(n = n()) %>% 
+  pivot_wider(names_from = grade, values_from = n)
+```
+
+To simplify things, I’ll remove inspections with scores other than A, B, or C, and also remove the restaurants with missing boro information. I’ll also clean up boro names a bit.
+
+```{r}
+rest_inspec = 
+  rest_inspec %>% 
+  filter(grade %in% c("A", "B", "C"), boro != "Missing") %>% 
+  mutate(boro = str_to_title(boro))
+```
+
+Let's find pizza places...
+
+```{r}
+rest_inspec %>% 
+  filter(str_detect(dba, "[Pp][Ii][Zz][Zz][Aa]")) %>% 
+  group_by(boro) %>% 
+  summarise(n_pizza = n())
+```
+
+```{r}
+rest_inspec %>% 
+  filter(str_detect(dba, "[Pp][Ii][Zz][Zz][Aa]")) %>% 
+  mutate(
+    boro = fct_infreq(boro),
+    boro = fct_recode(boro, "The City" = "Manhattan")) %>% 
+  ggplot(aes(x = boro)) + geom_bar()
+```
+
+Using just `replace` only lets you keep factor as 5 levels, can't add another, will convert all other to NAs.
+
+If we want to change `Manhattan` to `The City` and keep the order of the levels, use `fct_recode`.
+
+
